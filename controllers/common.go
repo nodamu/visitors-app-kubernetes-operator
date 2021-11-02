@@ -20,7 +20,7 @@ func labels(v *v1.VisitorsApp, tier string) map[string]string {
 }
 
 func (r *VisitorsAppReconciler) ensureDeployment(
-	request *reconcile.Request,
+	request reconcile.Request,
 	instance *v1.VisitorsApp,
 	dep *appsv1.Deployment) (*reconcile.Result, error) {
 
