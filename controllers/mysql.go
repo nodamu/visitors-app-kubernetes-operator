@@ -41,11 +41,7 @@ func (r *VisitorsAppReconciler) mysqlAuthSecret(v *v1.VisitorsApp) *corev1.Secre
 }
 
 func (r *VisitorsAppReconciler) mysqlDeployment(v *v1.VisitorsApp) *appsv1.Deployment {
-	labels := map[string]string{
-		"app":             "visitors",
-		"visitorssite_cr": v.Name,
-		"tier":            "mysql",
-	}
+	labels := labels(v, "mysql")
 
 	size := int32(1)
 
@@ -118,11 +114,7 @@ func (r *VisitorsAppReconciler) mysqlDeployment(v *v1.VisitorsApp) *appsv1.Deplo
 }
 
 func (r *VisitorsAppReconciler) mysqlService(v *v1.VisitorsApp) *corev1.Service {
-	labels := map[string]string{
-		"app":             "visitors",
-		"visitorssite_cr": v.Name,
-		"tier":            "mysql",
-	}
+	labels := labels(v, "mysql")
 
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
@@ -155,7 +147,8 @@ func (r *VisitorsAppReconciler) mysqlIsUp(v *v1.VisitorsApp) bool {
 	}, deployment)
 
 	if err != nil {
-		log.Error(err, "Deployment mysql not found")
+		//log.Error(err, "Deployment mysql not found")
+		log.Log.Error(err, "Deployment mysql not found")
 		return false
 	}
 
