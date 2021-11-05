@@ -10,7 +10,7 @@ make install run
 ```
 - To build image and push to registry
 ```shell
-make docker-build  docker-push IMG=${IMAGE_NAME}:${TAG}
+make docker-build docker-push IMG=${IMAGE_NAME}:${TAG}
 
 ```
 - To deploy to a cluster 
