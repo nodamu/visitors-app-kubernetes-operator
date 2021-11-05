@@ -1,7 +1,8 @@
 apiVersion: web.nickadamu.tech/v1
 kind: VisitorsApp
 metadata:
-  name: visitorsapp-sample
+  name: visitorsapp
 spec:
   # Add fields here
-  foo: bar
+  size: 2
+  title: "Hello"

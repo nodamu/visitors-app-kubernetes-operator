@@ -8,14 +8,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"time"
 )
 
 const backendPort = 8000
-const backendServicePort = 30685
+const backendServicePort = 30045
 const backendImage = "jdob/visitors-service:1.0.0"
 
 func backendDeployment(v *v1.VisitorsApp) string {
@@ -63,14 +63,15 @@ func (r *VisitorsAppReconciler) backendDeployment(v *v1.VisitorsApp) *appsv1.Dep
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      backendDeployment(v),
 					Namespace: v.Namespace,
+					Labels:    labels,
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
-						Name:  "visitors-backend",
+						Name:  "backend",
 						Image: backendImage,
 						Ports: []corev1.ContainerPort{
 							{
-								Name:          "visitors-backend",
+								Name:          "backend",
 								ContainerPort: backendPort,
 							},
 						},
@@ -115,7 +116,7 @@ func (r *VisitorsAppReconciler) backendService(v *v1.VisitorsApp) *corev1.Servic
 			Ports: []corev1.ServicePort{{
 				Port:       backendPort,
 				TargetPort: intstr.FromInt(backendPort),
-				NodePort:   30685,
+				NodePort:   backendServicePort,
 			}},
 			Selector: labels,
 			Type:     corev1.ServiceTypeNodePort,
@@ -137,7 +138,7 @@ func (r *VisitorsAppReconciler) updateBackendStatus(v *v1.VisitorsApp) error {
 	return err
 }
 
-func (r *VisitorsAppReconciler) handleBackendChanges(v *v1.VisitorsApp) (*reconcile.Result, error) {
+func (r *VisitorsAppReconciler) handleBackendChanges(v *v1.VisitorsApp) (*ctrl.Result, error) {
 	found := &appsv1.Deployment{}
 
 	err := r.Client.Get(context.TODO(), types.NamespacedName{
@@ -147,7 +148,7 @@ func (r *VisitorsAppReconciler) handleBackendChanges(v *v1.VisitorsApp) (*reconc
 
 	if err != nil {
 		// The deployment may not have been created yet, so requeue
-		return &reconcile.Result{RequeueAfter: 5 * time.Second}, err
+		return &ctrl.Result{RequeueAfter: 5 * time.Second}, err
 	}
 
 	size := v.Spec.Size
@@ -157,10 +158,10 @@ func (r *VisitorsAppReconciler) handleBackendChanges(v *v1.VisitorsApp) (*reconc
 		r.Client.Update(context.TODO(), found)
 		if err != nil {
 			log.Log.Error(err, "Failed to update Deployment.", "Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
-			return &reconcile.Result{}, err
+			return &ctrl.Result{}, err
 		}
 
-		return &reconcile.Result{Requeue: true}, nil
+		return &ctrl.Result{Requeue: true}, nil
 
 	}
 

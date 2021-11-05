@@ -26,7 +26,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"time"
 
 	webv1 "github.com/nodamu/visitors-operator/api/v1"
@@ -61,7 +60,7 @@ func (r *VisitorsAppReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	v := &webv1.VisitorsApp{}
 
-	err := r.Client.Get(ctx, req.NamespacedName, v)
+	err := r.Get(ctx, req.NamespacedName, v)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -73,7 +72,7 @@ func (r *VisitorsAppReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 
-	var result *reconcile.Result
+	var result *ctrl.Result
 
 	// ========== MySQL ====================
 
@@ -103,7 +102,7 @@ func (r *VisitorsAppReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		delay := time.Second * time.Duration(5)
 
 		log.Log.Info(fmt.Sprintf("MySQL isn't running, waiting for %s", delay))
-		return reconcile.Result{RequeueAfter: delay}, nil
+		return ctrl.Result{RequeueAfter: delay}, nil
 	}
 
 	// == Visitors Backend  ==========
@@ -120,7 +119,7 @@ func (r *VisitorsAppReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	err = r.updateBackendStatus(v)
 	if err != nil {
 		// Requeue the request if the status could not be updated
-		return reconcile.Result{}, err
+		return ctrl.Result{}, err
 	}
 
 	result, err = r.handleBackendChanges(v)
@@ -142,7 +141,7 @@ func (r *VisitorsAppReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	err = r.updateFrontendStatus(v)
 	if err != nil {
 		// Requeue the request
-		return reconcile.Result{}, err
+		return ctrl.Result{}, err
 	}
 
 	result, err = r.handleFrontendChanges(v)

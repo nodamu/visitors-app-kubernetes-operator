@@ -7,6 +7,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -22,7 +23,7 @@ func labels(v *v1.VisitorsApp, tier string) map[string]string {
 func (r *VisitorsAppReconciler) ensureDeployment(
 	request reconcile.Request,
 	instance *v1.VisitorsApp,
-	dep *appsv1.Deployment) (*reconcile.Result, error) {
+	dep *appsv1.Deployment) (*ctrl.Result, error) {
 
 	found := &appsv1.Deployment{}
 
@@ -34,21 +35,21 @@ func (r *VisitorsAppReconciler) ensureDeployment(
 
 	if err != nil && errors.IsNotFound(err) {
 		//Create the deployment
-		log.Log.Info("Creating new deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Namespace)
+		log.Log.Info("Creating new deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
 
 		err = r.Client.Create(context.TODO(), dep)
 
 		if err != nil {
 			// Deployment failed
 			log.Log.Error(err, "Failed to create new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
-			return &reconcile.Result{}, err
+			return &ctrl.Result{}, err
 		} else {
 			return nil, nil
 		}
 	} else if err != nil {
 		// Error that isn't due to the deployment not existing
 		log.Log.Error(err, "Failed to get Deployment")
-		return &reconcile.Result{}, err
+		return &ctrl.Result{}, err
 	}
 
 	return nil, nil
@@ -57,7 +58,7 @@ func (r *VisitorsAppReconciler) ensureDeployment(
 func (r *VisitorsAppReconciler) ensureService(request reconcile.Request,
 	instance *v1.VisitorsApp,
 	s *corev1.Service,
-) (*reconcile.Result, error) {
+) (*ctrl.Result, error) {
 	found := &corev1.Service{}
 	err := r.Client.Get(context.TODO(), types.NamespacedName{
 		Name:      s.Name,
@@ -72,7 +73,7 @@ func (r *VisitorsAppReconciler) ensureService(request reconcile.Request,
 		if err != nil {
 			// Creation failed
 			log.Log.Error(err, "Failed to create new Service", "Service.Namespace", s.Namespace, "Service.Name", s.Name)
-			return &reconcile.Result{}, err
+			return &ctrl.Result{}, err
 		} else {
 			// Creation was successful
 			return nil, nil
@@ -80,7 +81,7 @@ func (r *VisitorsAppReconciler) ensureService(request reconcile.Request,
 	} else if err != nil {
 		// Error that isn't due to the service not existing
 		log.Log.Error(err, "Failed to get Service")
-		return &reconcile.Result{}, err
+		return &ctrl.Result{}, err
 	}
 
 	return nil, nil
@@ -89,7 +90,7 @@ func (r *VisitorsAppReconciler) ensureService(request reconcile.Request,
 func (r *VisitorsAppReconciler) ensureSecret(request reconcile.Request,
 	instance *v1.VisitorsApp,
 	s *corev1.Secret,
-) (*reconcile.Result, error) {
+) (*ctrl.Result, error) {
 	found := &corev1.Secret{}
 	err := r.Client.Get(context.TODO(), types.NamespacedName{
 		Name:      s.Name,
@@ -103,7 +104,7 @@ func (r *VisitorsAppReconciler) ensureSecret(request reconcile.Request,
 		if err != nil {
 			// Creation failed
 			log.Log.Error(err, "Failed to create new Secret", "Secret.Namespace", s.Namespace, "Secret.Name", s.Name)
-			return &reconcile.Result{}, err
+			return &ctrl.Result{}, err
 		} else {
 			// Creation was successful
 			return nil, nil
@@ -111,7 +112,7 @@ func (r *VisitorsAppReconciler) ensureSecret(request reconcile.Request,
 	} else if err != nil {
 		// Error that isn't due to the secret not existing
 		log.Log.Error(err, "Failed to get Secret")
-		return &reconcile.Result{}, err
+		return &ctrl.Result{}, err
 	}
 
 	return nil, nil

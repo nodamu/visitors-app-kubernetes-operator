@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	v1 "github.com/nodamu/visitors-operator/api/v1"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -12,11 +13,10 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 const frontendPort = 3000
-const frontendServicePort = 30686
+const frontendServicePort = 30048
 const frontendImage = "jdob/visitors-webui:1.0.0"
 
 func frontendDeploymentName(v *v1.VisitorsApp) string {
@@ -60,7 +60,7 @@ func (r *VisitorsAppReconciler) frontendDeployment(v *v1.VisitorsApp) *appsv1.De
 						Name:  "visitors-webui",
 						Ports: []corev1.ContainerPort{{
 							ContainerPort: frontendPort,
-							Name:          "visitors",
+							Name:          "frontend",
 						}},
 						Env: env,
 					}},
@@ -105,7 +105,7 @@ func (r *VisitorsAppReconciler) updateFrontendStatus(v *v1.VisitorsApp) error {
 	return err
 }
 
-func (r *VisitorsAppReconciler) handleFrontendChanges(v *v1.VisitorsApp) (*reconcile.Result, error) {
+func (r *VisitorsAppReconciler) handleFrontendChanges(v *v1.VisitorsApp) (*ctrl.Result, error) {
 	found := &appsv1.Deployment{}
 	err := r.Client.Get(context.TODO(), types.NamespacedName{
 		Name:      frontendDeploymentName(v),
@@ -113,7 +113,7 @@ func (r *VisitorsAppReconciler) handleFrontendChanges(v *v1.VisitorsApp) (*recon
 	}, found)
 	if err != nil {
 		// The deployment may not have been created yet, so requeue
-		return &reconcile.Result{RequeueAfter: 5 * time.Second}, err
+		return &ctrl.Result{RequeueAfter: 5 * time.Second}, err
 	}
 
 	title := v.Spec.Title
@@ -124,10 +124,10 @@ func (r *VisitorsAppReconciler) handleFrontendChanges(v *v1.VisitorsApp) (*recon
 		err = r.Client.Update(context.TODO(), found)
 		if err != nil {
 			log.Log.Error(err, "Failed to update Deployment.", "Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
-			return &reconcile.Result{}, err
+			return &ctrl.Result{}, err
 		}
 		// Spec updated - return and requeue
-		return &reconcile.Result{Requeue: true}, nil
+		return &ctrl.Result{Requeue: true}, nil
 	}
 
 	return nil, nil
