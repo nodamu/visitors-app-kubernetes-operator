@@ -1,6 +1,6 @@
 ## Visitors App Operator
 
-* This is an example operator to learn how to build custom controller to manage as stateful application on kubernetes
+* This is an example operator to learn how to build custom controller to manage stateful application on kubernetes
 * Manages a basic React, Django, MySQL app
 
 ### Installation
